@@ -1,3 +1,10 @@
+const readline = require('readline');
+
+const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout
+});
+
 // // プレイヤー数を尋ねる
 // let playerCount = prompt('プレイヤー数を入力してください');
 // // プレイヤー数が1以下の場合、再度入力を求める
@@ -53,24 +60,28 @@ let playerSelect = {
     player2: 0
 };
 let playerScore = {
-    player1: [0],
-    player2: [0]
+    player1: 0,
+    player2: 0
 };
 const playerCount = 2;
 
-function selectHand (scoreCard, player) {
+function askQuestion(query) {
+    return new Promise(resolve => rl.question(query, ans => resolve(ans)));
+}
+
+async function selectHand(scoreCard, player) {
     let playerSelect;
     while (true) {
-        playerSelect = prompt(`
+        playerSelect = await askQuestion(`
         今回の得点は${scoreCard}点です。プレイヤー${player}は手札から出すカードを選んでください。
         手札: ${playerLeftHand[`player${player}`]}
         現在の点数:
-            あなた: ${playerScore[`player${player}`][playerScore[`player${player}`].length - 1]}点
-            相手: ${playerScore[`player${player === 1 ? 2 : 1}`][playerScore[`player${player === 1 ? 2 : 1}`].length - 1]}点
+            あなた: ${playerScore[`player${player}`]}点
+            相手: ${playerScore[`player${player === 1 ? 2 : 1}`]}点
         `);
-        if (playerLeftHand.indexOf(Number(playerSelect)) !== -1) {
+        if (playerLeftHand[`player${player}`].includes(Number(playerSelect))) {
             // プレイヤーの手札から選択したカードを削除
-            playerLeftHand.splice(playerLeftHand.indexOf(Number(playerSelect)), 1);
+            playerLeftHand[`player${player}`].splice(playerLeftHand[`player${player}`].indexOf(Number(playerSelect)), 1);
             // プレイヤーの手札をgameRecordに格納
             // gameRecord.playerHand
             break;
@@ -78,29 +89,37 @@ function selectHand (scoreCard, player) {
     }
     return playerSelect, playerLeftHand;
 }
-function oneCycle () {
+async function oneCycle() {
     // 得点カードを選択
     let scoreCard = scoreCards[Math.floor(Math.random() * scoreCards.length)];
     // 得点カードをscoreCardsから削除
     scoreCards.splice(scoreCards.indexOf(scoreCard), 1);
     // プレイヤーに手札を選択させる関数を定義
     for (let i = 0; i < playerCount; i++) {
-        playerSelect[`player${i + 1}`], playerLeftHand[`player${i + 1}`] = selectHand(scoreCard, i + 1);
+        playerSelect[`player${i + 1}`], playerLeftHand[`player${i + 1}`] = await selectHand(scoreCard, i + 1);
     }
     // playerSelectのうち大きい方を選択
     let winner = Math.max(playerSelect.player1, playerSelect.player2);
     let loser = Math.min(playerSelect.player1, playerSelect.player2);
     // 得点遷移を記録
     if (scoreCard > 0) {
-        winnersScore = playerScore[`player${winner}`] + scoreCard;
-        losersScore = playerScore[`player${loser}`];
-        playerScore[`player${winner}`].push(winnersScore);
-        playerScore[`player${loser}`].push(losersScore);
+            // let winnersScore = playerScore[`player${winner}`][playerScore[`player${winner}`].length - 1] + scoreCard;
+            // let losersScore = playerScore[`player${loser}`][playerScore[`player${loser}`].length - 1];
+        // playerScore[`player${winner}`].push(winnersScore);
+        // playerScore[`player${loser}`].push(losersScore);
+        let winnersScore = playerScore[`player${winner}`] + scoreCard;
+        let losersScore = playerScore[`player${loser}`];
+        playerScore[`player${winner}`] = winnersScore;
+        playerScore[`player${loser}`] = losersScore;
     } else {
-        winnersScore = playerScore[`player${winner}`];
-        losersScore = playerScore[`player${loser}`] + scoreCard;
-        playerScore[`player${winner}`].push(winnersScore);
-        playerScore[`player${loser}`].push(losersScore);
+        // let winnersScore = playerScore[`player${winner}`][playerScore[`player${winner}`].length - 1];
+        // let losersScore = playerScore[`player${loser}`][playerScore[`player${loser}`].length - 1] + scoreCard;
+        // playerScore[`player${winner}`].push(winnersScore);
+        // playerScore[`player${loser}`].push(losersScore);
+        let winnersScore = playerScore[`player${winner}`];
+        let losersScore = playerScore[`player${loser}`] + scoreCard;
+        playerScore[`player${winner}`] = winnersScore;
+        playerScore[`player${loser}`] = losersScore;
     }
     let message = `
     得点カード: ${scoreCard}
@@ -114,14 +133,17 @@ function oneCycle () {
     `
     console.log(message);
     // 次のターンへ進む
-    prompt();
+    await askQuestion('');
 }
 
 // ゲームを開始
-for (let i = 0; i < 10; i++) {
-    console.log(`ターン${i + 1}`);
-    oneCycle();
-}
+(async function startGame() {
+    for (let i = 0; i < 10; i++) {
+        console.log(`ターン${i + 1}`);
+        await oneCycle();
+    }
+    rl.close();
+})();
 
 // ゲームの一サイクルの処理を定義
 // function oneCycle (turnCount) { // turnCountは0から始まる
@@ -186,7 +208,7 @@ for (let i = 0; i < 10; i++) {
 //     console.log(`得点カード: ${scoreCard}\nプレイヤー1の手札: ${player1Hand}\nプレイヤー2の手札: ${player2Hand}`);
 //     // 得点カードが＋の場合
 //     if (scoreCard > 0) {
-//         // 
+//         //
 //     }
 // }
 

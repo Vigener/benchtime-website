@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Client</title>
+    <!-- client apiを読み込む -->
+    <script src="/socket.io/socket.io.js"></script>
+</head>
+
+<body>
+    <script>
+        // 通信先のサーバを指定する
+        var socket = io('http://localhost');
+
+        //ログインボタン押下イベント
+        function login() {
+            var form = document.forms.mainForm;
+            socket.emit('login', form.userName.value);
+
+            // 対戦開始イベント
+            socket.on("battle", function (data) {
+                // 対戦開始時処理（省略）
+            }
+    </script>
+    ～～～中略～～～
+    <input type="text" name="userName"></input>
+    <button id="login" onClick="login()">ログイン</button>
+    </form>
+</body>
+
+</html>
